@@ -23,16 +23,16 @@
 // Please maintain this license information along with authorship
 // and copyright notices in any redistribution of this code
 // **********************************************************************************
-#include <RFM69.h>         // get it here: https://github.com/lowpowerlab/rfm69
-#include <RFM69_ATC.h>     // get it here: https://github.com/lowpowerlab/rfm69
-#include <SPI.h>           // included in Arduino IDE (www.arduino.cc)
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
-#include <LowPower.h>      // get it here: https://github.com/lowpowerlab/lowpower
+#include <RFM69.h>         // Get It Here: https://github.com/lowpowerlab/rfm69
+#include <RFM69_ATC.h>     // Get It Here: https://github.com/lowpowerlab/rfm69
+#include <SPI.h>           // Included In Arduino IDE (www.arduino.cc)
+#include <Adafruit_Sensor.h> // Get It Here https://github.com/adafruit/Adafruit_Sensor
+#include <Adafruit_BME280.h> // Get It Here https://github.com/adafruit/Adafruit_BME280_Library/
+#include <LowPower.h>      // Get It Here: https://github.com/lowpowerlab/lowpower
 //*********************************************************************************************
 //************ IMPORTANT SETTINGS - YOU MUST CHANGE/CONFIGURE TO FIT YOUR HARDWARE ************
 //*********************************************************************************************
-#define GATEWAYID       1 // ID Of Receiving Radio
+#define GATEWAYID       1 // ID Of Receiving Radio, Should Be The Same On All Nodes
 #define NODEID          2 // This Nodes Unique ID
 #define NETWORKID       100  // This Has To Be The Same On All Gateways/Nodes
 #define FREQUENCY       RF69_868MHZ  // PCB Antenna Tuned To 868
@@ -49,7 +49,7 @@ period_t sleepTime = SLEEP_4S; // period_t Is An enum Type Defined In The LowPow
 #define BME_MISO 12
 #define BME_MOSI 11
 #define BME_CS 3
-#define SEALEVELPRESSURE_HPA (1013.25)
+#define SEALEVELPRESSURE_HPA (1013.25)  //
 
 RFM69_ATC radio;
 
@@ -58,7 +58,6 @@ char Fstr[10];
 char Hstr[10];
 double F, P, H;
 char buffer[50];
-//int txlvl = 0;
 unsigned long delayTime;
 char input = 0;
 byte sendLoops = 0;
@@ -67,20 +66,18 @@ byte sendLen;
 Adafruit_BME280 bme(BME_CS); // Hardware SPI
 
 void setup(void) {
-  //Serial.begin(9600);
   pinMode(LED, OUTPUT);
   radio.initialize(FREQUENCY, NODEID, NETWORKID);
-  //radio.encrypt(ENCRYPTKEY);
+  // radio.encrypt(ENCRYPTKEY);  // If Enabled, It Must Be Enabled On The Receiver Aswell.
   radio.enableAutoPower(ATC_RSSI);
   if (!bme.begin()) {
     while (1);  // BME280 Failed To Init, Sit Here As There Is No Point Continuing
   }
   bme.setSampling(Adafruit_BME280::MODE_FORCED,
-                  Adafruit_BME280::SAMPLING_X1, // temperature
-                  Adafruit_BME280::SAMPLING_X1, // pressure
-                  Adafruit_BME280::SAMPLING_X1, // humidity
+                  Adafruit_BME280::SAMPLING_X1, // Temperature
+                  Adafruit_BME280::SAMPLING_X1, // Pressure
+                  Adafruit_BME280::SAMPLING_X1, // Humidity
                   Adafruit_BME280::FILTER_OFF   );
-  radio.sendWithRetry(GATEWAYID, "START", 6, 0);
   Blink(LED, 100); Blink(LED, 100); Blink(LED, 100);
   for (uint8_t i = 0; i <= A5; i++) {
     if (i == RF69_SPI_CS) {
@@ -98,11 +95,9 @@ void loop() {
     P = bme.readPressure() / 100.0F;
     F = bme.readTemperature();
     H = bme.readHumidity();
-    //txlvl = radio._transmitLevel;
     dtostrf(F, 3, 2, Fstr);
     dtostrf(H, 3, 2, Hstr);
     dtostrf(P, 3, 2, Pstr);
-    //sprintf(buffer, "T:%s H:%s P:%s", "25", "78", "1234");
     sprintf(buffer, "T:%s H:%s P:%s", Fstr, Hstr, Pstr);
     sendLen = strlen(buffer);
     radio.sendWithRetry(GATEWAYID, buffer, sendLen, 0);
